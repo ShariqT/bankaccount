@@ -5,6 +5,7 @@
 #include "Customer.h"
 #include "Menus.h"
 #include <string.h>
+#include <vector>
 
 using namespace std;
 
@@ -33,13 +34,22 @@ void badCredentials(){
 void findByName(){
 	system("clear");
 	cout << "Finding Customer By Name";
+	string search_str;
+	cin.ignore();
+	cin >> search_str;
+	/*vector<Customer> search_results;
+	Customer::searchByName(&search_results, search_str);
+	cout << search_results.size();
+	for(search_results<Customer>::iterator i = values.begin(); i != values.end(); i++){
+
+	}*/
 }
 
 void findByAccount(){
 	system("clear");
 	int account_number;
 	string selection;
-	Customer *found_customer = new Customer();
+	Customer *found_customer;
 	cout << "Finding Customer By Account Number" << endl;
 	cout << "-------------------------------------------------" << endl;
 	cout << "Enter Customer Account Number:";
@@ -48,9 +58,8 @@ void findByAccount(){
 	//Customer has a static function that returns a pointer to a Customer object.
 	//if the Customer->ACCESS_STATUS attribute is false, then there is no customer that matches 
 	//the account number. 
-	cout << found_customer << endl;
-	found_customer->searchByAccountNumber(account_number);
-	if(found_customer->getAccessStatus()){
+	found_customer = Customer::searchByAccountNumber(account_number);
+	if(found_customer != 0){
 		editCustomerInformation(found_customer);
 	}else{
 		cout << "***Could not find a customer with that account number***" << endl;

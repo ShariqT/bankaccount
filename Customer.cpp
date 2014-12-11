@@ -27,24 +27,55 @@ bool Customer::getAccessStatus(){
 	return this->STATUS;
 }
 
-void Customer::searchByAccountNumber(int account_number){
+
+void Customer::searchByName(vector<Customer> *search_results, string search_str){
 	ifstream customer_database;
-	customer_database.open(this->data_file, ios::binary | ios::in);
+	ifstream metainfo;
+
+	customer_database.open(Customer::data_file, ios::binary | ios::in);
+	metainfo.open(Customer::header_file, ios::in);
+	int read_account_number;
+	int byte_order;
+	int size_of_string;
+	while(metainfo >> read_account_number >> byte_order){
+		stringstream ss;
+		customer_database.seekg(byte_order + 4, ios::beg);
+		customer_database.read((char *)&size_of_string, 8);
+		for(int x = 0; x < size_of_string; x++){
+			char c;
+			customer_database.read((char *)&c, sizeof(char));
+			ss << c;
+		}
+		string to_be_search = ss.str();
+
+		//check to see if it matches the name
+		if(to_be_search.find(search_str) != string::npos){
+			cout << "I found something!" << endl;
+		}
+	}
+
+}
+
+Customer* Customer::searchByAccountNumber(int account_number){
+	ifstream customer_database;
+	customer_database.open(Customer::data_file, ios::binary | ios::in);
 
 	ifstream metainfo;	
-	metainfo.open(this->header_file, ios::in);
+	metainfo.open(Customer::header_file, ios::in);
 
 	int read_account_number;
 	int byte_order;
+	Customer *return_address = 0;
 	while(metainfo >> read_account_number >> byte_order ){
 		if(read_account_number == account_number){
+			Customer *found_customer = new Customer();
 			//found the record we were searching for!!!
 			//move to the first set of the byte and then move up four to get to the 
 			//name attribute
 			int size_of_string;
 			stringstream ss;
 			customer_database.seekg(byte_order + 4, ios::beg);
-			this->setAccountNumber(account_number);
+			found_customer->setAccountNumber(account_number);
 			customer_database.read((char *)&size_of_string, 8);
 			for(int x = 0; x < size_of_string; x++){
 				char c;
@@ -52,12 +83,13 @@ void Customer::searchByAccountNumber(int account_number){
 				ss << c;
 			}
 			
-			customer_database.read((char *)(&saving), sizeof(double));
-			customer_database.read((char *)(&checking), sizeof(double));
-			customer_database.read((char *)(&has_saving), sizeof(bool));
-			customer_database.read((char *)(&has_checking), sizeof(bool));
-			name = ss.str();
-			this->setAccessStatus(true);
+			customer_database.read((char *)(&found_customer->saving), sizeof(double));
+			customer_database.read((char *)(&found_customer->checking), sizeof(double));
+			customer_database.read((char *)(&found_customer->has_saving), sizeof(bool));
+			customer_database.read((char *)(&found_customer->has_checking), sizeof(bool));
+			found_customer->name = ss.str();
+			found_customer->setAccessStatus(true);
+			return_address = found_customer;
 		}
 	}
 
@@ -67,7 +99,7 @@ void Customer::searchByAccountNumber(int account_number){
 
 	customer_database.close();
 	metainfo.close();
-	return;
+	return return_address;
 
 }
 
@@ -83,35 +115,41 @@ void Customer::create(){
 	cout << "Saving customer information..." << endl;
 
 	fstream customer_database;
-	customer_database.open(this->data_file, ios::binary | ios::out | ios::in);
+	
+	customer_database.open(Customer::data_file, ios::binary | ios::out | ios::in);
 	
 	fstream metainfo;
-	metainfo.open(this->header_file, ios::out | ios::in);
+	metainfo.open(Customer::header_file, ios::out | ios::in | ios::app);
 
 	int last_record;
-	int byte_order;
+	int byte_order = 0;
 	//determine what the customer ID should be by going to through the file and finding the last
 	//id that was inserted. 
 
 	//but first let's see if the file is empty or not
 	metainfo.seekg(0, ios::end);
 	size_t len = metainfo.tellg();
+	metainfo.seekg(0, ios::beg);
 	if(len == 0){
 		//file is empty, so let's start at the beginning. account id will be 1001.
 		this->account_number = 1001;
-		byte_order = 0;
 	}else{
 		//move the last record and get the account number for it and increase it by one.
-		//get last byte position records and increase by one as well
-		metainfo.seekg(0, ios::beg);
-		while(metainfo >> last_record >> byte_order){}
-		this->account_number = ++last_record;
-		++byte_order;
 		
-		metainfo << last_record << endl;
-		metainfo << byte_order << endl;
+		while(metainfo >> last_record >> byte_order){
+			cout << "last record is " << last_record << endl;
+			cout << "byter order is " << byte_order << endl;
+			this->account_number = ++last_record;
+		}
+		customer_database.seekg(0, ios::end);
+		byte_order = customer_database.tellg();		
 	}
-customer_database.seekg(byte_order, ios::beg);
+	cout << this->account_number << endl;
+		cout << byte_order << endl;
+		metainfo.clear();
+	
+		
+	customer_database.seekg(0, ios::end);
 	
 	size_t strlength = name.size();
 	//create the customer record in the file: byte order is account_number, length of name, name, saving, checking, has_saving, has_checking
@@ -122,7 +160,7 @@ customer_database.seekg(byte_order, ios::beg);
 	customer_database.write((char *)(&checking), sizeof(checking));
 	customer_database.write((char *)(&has_saving), sizeof(has_saving));
 	customer_database.write((char *)(&has_checking), sizeof(has_saving));
-	cout << customer_database.gcount() << endl;
+	
 	if(customer_database.fail()){
 		switch(errno){
 			case EACCES:
@@ -135,11 +173,28 @@ customer_database.seekg(byte_order, ios::beg);
 				perror("Opening data file");
 		}
 
-		exit(EXIT_FAILURE);
+		
 	}
 
-	metainfo << account_number << endl;
+	if(metainfo.fail()){
+		switch(errno){
+			case EACCES:
+				cout << "Could not write to the file. Either the drive was not ready or permission was denied" << endl;
+				break;
+			case ENOENT:
+				cout << "Could not find this file" << endl;
+			break;
+			default:
+				cout << strerror(errno) << endl;
+		}
+
+		
+	}
+
+	metainfo.seekp(0, ios::end);
+	metainfo << this->account_number << endl;
 	metainfo << byte_order << endl;
-	customer_database.close();
 	metainfo.close();
+	customer_database.close();
+	
 }

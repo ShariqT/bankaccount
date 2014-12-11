@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <string.h>
+#include <vector>
 
 
 using namespace std;
@@ -24,11 +25,15 @@ class Customer{
 		int getAccountNumber();
 		void setAccessStatus(bool status);
 		bool getAccessStatus();
-		void searchByAccountNumber(int account_number);
+		static Customer* searchByAccountNumber(int account_number);
+		void static searchByName(vector<Customer> *search_results, string search_str);
+
+	protected:
+		static char data_file[];
+		static char header_file[];
 
 	private:
 		unsigned int account_number;
 		bool STATUS;
-		static char data_file[];
-		static char header_file[];
+		
 };
