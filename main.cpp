@@ -33,16 +33,54 @@ void badCredentials(){
 
 void findByName(){
 	system("clear");
-	cout << "Finding Customer By Name";
+	string selection;
+	unsigned int search_sel;
+	cout << "Finding Customer By Name" << endl;
+	cout << "-------------------------------------------------" << endl;
+	cout << "Enter Customer's Name (case-senistive):" << endl;
 	string search_str;
 	cin.ignore();
 	cin >> search_str;
-	/*vector<Customer> search_results;
-	Customer::searchByName(&search_results, search_str);
-	cout << search_results.size();
-	for(search_results<Customer>::iterator i = values.begin(); i != values.end(); i++){
+	vector<Customer *> *search_results = new vector<Customer *>();
+	Customer::searchByName(search_results, search_str);
+	
+	if(search_results->size() != 0){
+		for(size_t i = 0; i < search_results->size(); i++){
+			cout << "Search Results: " << endl;
+			cout << i+1 << ") " << search_results->at(i)->name << endl;
+		}
+		cin.ignore();
+		cout << "Select the number of the account you would like to edit: " << endl;
+		cin >> search_sel;
+		if(search_sel > search_results->size()){
+			cout << "That was not an available option. Please select again." << endl;
+			cin.ignore();
+			cin >> search_sel;
+		}else{
+			editCustomerInformation(search_results->at(0));
+		
+			//clean up the memory
+			for(size_t i = 0; i < search_results->size(); i++){
+				delete search_results->at(i);
+			}
+			search_results->clear();
+			delete search_results;
+		}
 
-	}*/
+		
+		
+	}else{
+
+		cout << "Could not find any customer's with that name!" << endl;
+		cout << "Would you like to try again? (y for Yes and n for No)" << endl;
+		cin.ignore();
+		cin >> selection;
+		if(selection.compare("y") == 0){
+			findByName();
+		}else{
+			showMainMenu();
+		}
+	}
 }
 
 void findByAccount(){
@@ -76,7 +114,7 @@ void findByAccount(){
 
 
 void editCustomerInformation(Customer *customer){
-	system("clear");
+	//system("clear");
 	cout << "Name :" << customer->name << endl;
 	cout << "Account Number: " << customer->getAccountNumber() << endl;
 

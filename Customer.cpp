@@ -28,7 +28,7 @@ bool Customer::getAccessStatus(){
 }
 
 
-void Customer::searchByName(vector<Customer> *search_results, string search_str){
+void Customer::searchByName(vector<Customer *> *search_results, string search_str){
 	ifstream customer_database;
 	ifstream metainfo;
 
@@ -51,6 +51,17 @@ void Customer::searchByName(vector<Customer> *search_results, string search_str)
 		//check to see if it matches the name
 		if(to_be_search.find(search_str) != string::npos){
 			cout << "I found something!" << endl;
+			search_results->push_back(new Customer());
+
+			customer_database.read((char *)(&search_results->back()->saving), sizeof(double));
+			customer_database.read((char *)(&search_results->back()->checking), sizeof(double));
+			customer_database.read((char *) (&search_results->back()->has_saving), sizeof(bool));
+			customer_database.read((char *)(&search_results->back()->has_checking), sizeof(bool));
+			search_results->back()->setAccessStatus(true);
+			search_results->back()->setAccountNumber(read_account_number);
+			search_results->back()->name = ss.str();
+			cout << search_results->back()->name << endl;
+			
 		}
 	}
 

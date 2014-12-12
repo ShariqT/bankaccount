@@ -26,7 +26,7 @@ class Customer{
 		void setAccessStatus(bool status);
 		bool getAccessStatus();
 		static Customer* searchByAccountNumber(int account_number);
-		void static searchByName(vector<Customer> *search_results, string search_str);
+		void static searchByName(vector<Customer *> *search_results, string search_str);
 
 	protected:
 		static char data_file[];
