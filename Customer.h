@@ -21,6 +21,7 @@ class Customer{
 		Customer();
 		void save();
 		void create();
+		void _write(fstream *file);
 		void setAccountNumber(int account_number);
 		int getAccountNumber();
 		void setAccessStatus(bool status);
@@ -33,7 +34,7 @@ class Customer{
 		static char header_file[];
 
 	private:
-		unsigned int account_number;
+		int account_number;
 		bool STATUS;
 		
 };

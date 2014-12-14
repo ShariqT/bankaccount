@@ -59,9 +59,7 @@ void Customer::searchByName(vector<Customer *> *search_results, string search_st
 			customer_database.read((char *)(&search_results->back()->has_checking), sizeof(bool));
 			search_results->back()->setAccessStatus(true);
 			search_results->back()->setAccountNumber(read_account_number);
-			search_results->back()->name = ss.str();
-			cout << search_results->back()->name << endl;
-			
+			search_results->back()->name = ss.str();			
 		}
 	}
 
@@ -120,6 +118,77 @@ void Customer::setAccountNumber(int account_number){
 	this->account_number = account_number;
 }
 
+void Customer::save(){
+	cout << "Saving updated customer info..." << endl;
+	fstream customer_database;
+	ifstream metainfo_read;
+	ofstream metainfo_output;
+	int num;
+	int sel_num;
+	int sel_byte;
+	int byte_order;
+	vector<int> metainfo_contents; 
+	customer_database.open(Customer::data_file, ios::binary| ios::in| ios::out);
+	metainfo_read.open(Customer::header_file);
+	while(metainfo_read >> num >> byte_order){
+		if(this->account_number == num){
+			sel_num = num;
+			sel_byte = byte_order;
+		}
+		metainfo_contents.push_back(num);
+		metainfo_contents.push_back(byte_order);
+	}
+	metainfo_read.close();
+	customer_database.seekg(0, ios::end);
+	int new_byte = customer_database.tellg();
+	this->_write(&customer_database);
+	metainfo_output.open(Customer::header_file, ios::trunc);
+	for(unsigned int i = 0; i < metainfo_contents.size(); i++){
+		if(metainfo_contents.at(i) == sel_num){
+			metainfo_output << sel_num << endl;
+			continue;
+		}
+
+		if(metainfo_contents.at(i) == sel_byte){
+			metainfo_output << new_byte << endl;
+			continue;
+		}
+
+		metainfo_output << metainfo_contents.at(i) << endl;
+	}
+
+	metainfo_output.close();
+	customer_database.close();
+}
+
+
+void Customer::_write(fstream *file){
+	file->seekg(0, ios::end);
+	
+	size_t strlength = name.size();
+	//create the customer record in the file: byte order is account_number, length of name, name, saving, checking, has_saving, has_checking
+	file->write((char *)(&account_number), sizeof(account_number));
+	file->write((char *)(&strlength), sizeof(name.size()));
+	file->write(name.c_str(), strlength);
+	file->write((char *)(&saving), sizeof(saving));
+	file->write((char *)(&checking), sizeof(checking));
+	file->write((char *)(&has_saving), sizeof(has_saving));
+	file->write((char *)(&has_checking), sizeof(has_saving));
+	
+	if(file->fail()){
+		switch(errno){
+			case EACCES:
+				cout << "Could not write to the file. Either the drive was not ready or permission was denied" << endl;
+				break;
+			case ENOENT:
+				cout << "Could not find this file" << endl;
+			break;
+			default:
+				perror("Opening data file");
+		}
+	}
+
+}
 
 
 void Customer::create(){
@@ -159,34 +228,8 @@ void Customer::create(){
 		cout << byte_order << endl;
 		metainfo.clear();
 	
-		
-	customer_database.seekg(0, ios::end);
+	this->_write(&customer_database);	
 	
-	size_t strlength = name.size();
-	//create the customer record in the file: byte order is account_number, length of name, name, saving, checking, has_saving, has_checking
-	customer_database.write((char *)(&account_number), sizeof(account_number));
-	customer_database.write((char *)(&strlength), sizeof(name.size()));
-	customer_database.write(name.c_str(), strlength);
-	customer_database.write((char *)(&saving), sizeof(saving));
-	customer_database.write((char *)(&checking), sizeof(checking));
-	customer_database.write((char *)(&has_saving), sizeof(has_saving));
-	customer_database.write((char *)(&has_checking), sizeof(has_saving));
-	
-	if(customer_database.fail()){
-		switch(errno){
-			case EACCES:
-				cout << "Could not write to the file. Either the drive was not ready or permission was denied" << endl;
-				break;
-			case ENOENT:
-				cout << "Could not find this file" << endl;
-			break;
-			default:
-				perror("Opening data file");
-		}
-
-		
-	}
-
 	if(metainfo.fail()){
 		switch(errno){
 			case EACCES:

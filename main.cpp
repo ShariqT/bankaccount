@@ -114,11 +114,76 @@ void findByAccount(){
 
 
 void editCustomerInformation(Customer *customer){
-	//system("clear");
-	cout << "Name :" << customer->name << endl;
+	system("clear");
+	string selection;
+	double amt;
+	cout << "Name: " << customer->name << endl;
 	cout << "Account Number: " << customer->getAccountNumber() << endl;
 
+	if(customer->has_saving){
+		cout << "Savings: " << customer->saving << endl;
+	}
+
+	if(customer->has_checking){
+		cout << "Checking: " << customer->checking << endl;
+	}
+
+	cout << "---------------------------------" << endl;
+
+
+	editMenu();
+
+	
+
+	while (selection.compare("save") != 0){
+		cout << "Enter selection--" << endl;
+		
+		cin >> selection;
+
+		if(selection.compare("name") == 0){
+			cin.ignore();
+			cout << "Enter the new name: ";
+			getline(cin, customer->name);
+			cout << "**customer name changed to " << customer->name << "**" << endl;
+
+		}
+
+		if(selection.compare("saving") == 0){
+			
+			cout << "Enter new saving amout: ";
+			cin.ignore();
+			cin >> amt;
+			cin.ignore();
+			customer->saving = amt;
+			customer->has_saving = true;
+			cout << "**customer saving changed to " << customer->saving << "**" << endl;
+		}
+
+		if(selection.compare("checking") == 0){
+			
+			cout << "Enter new checking amount:";
+			cin.ignore();
+			cin >> amt;
+			cin.ignore();
+			customer->checking = amt;
+			customer->has_checking = true;
+			cout << "customer checking changed to " << customer->checking << "**" << endl;
+		}
+
+	}
+
+	customer->save();
+
 }
+
+
+void editMenu(){
+	cout << "What would you like to edit? Enter the word within parentheses." << endl;
+	cout << "(name) Account Holder's Name" << endl;
+	cout << "(saving) Saving Account" << endl;
+	cout << "(checking) Checking Account" << endl;
+	cout << "(save) Save Edited Information" << endl;
+} 
 
 void addCustomer(){
 	system("clear");
